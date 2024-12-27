@@ -21,18 +21,24 @@ export function useSocket(): UseSocketReturn {
   const [winner, setWinner] = useState<Winner | null>(null);
 
   useEffect(() => {
-    if (!socketRef.current) {
-      socketRef.current = io('http://localhost:3000');
+    socketRef.current = io('http://localhost:3000');
 
-      socketRef.current.on('gameState', (state: GameState) => {
-        setGameState(state);
-      });
+    socketRef.current.on('connect', () => {
+      console.log('Connected to server');
+    });
 
-      socketRef.current.on('gameWon', (data: Winner) => {
-        setWinner(data);
-        setGameState(prev => ({ ...prev, active: false }));
-      });
-    }
+    socketRef.current.on('connect_error', (err) => {
+      console.error('Connection error:', err);
+    });
+
+    socketRef.current.on('gameState', (state: GameState) => {
+      setGameState(state);
+    });
+
+    socketRef.current.on('gameWon', (data: Winner) => {
+      setWinner(data);
+      setGameState(prev => ({ ...prev, active: false }));
+    });
 
     return () => {
       if (socketRef.current) {
@@ -43,12 +49,20 @@ export function useSocket(): UseSocketReturn {
   }, []);
 
   const startGame = (range: { min: number; max: number }) => {
-    socketRef.current?.emit('startGame', range);
-    setWinner(null);
+    if (socketRef.current) {
+      socketRef.current.emit('startGame', range);
+      setWinner(null);
+    } else {
+      console.error('Socket is not connected');
+    }
   };
 
   const stopGame = () => {
-    socketRef.current?.emit('stopGame');
+    if (socketRef.current) {
+      socketRef.current.emit('stopGame');
+    } else {
+      console.error('Socket is not connected');
+    }
   };
 
   return {

@@ -1,5 +1,4 @@
-import React from 'react';
-import { TwitchUser } from '../types';
+import React, { useEffect, useState } from 'react';
 import { GameControls } from './GameControls';
 import { GameStatus } from './GameStatus';
 import { ChatDisplay } from './ChatDisplay';
@@ -9,7 +8,6 @@ import { useTwitchChat } from '../hooks/useTwitchChat';
 import { useSocket } from '../hooks/useSocket';
 
 interface GameDashboardProps {
-  user: TwitchUser;
   onLogout: () => void;
   minRange: number;
   maxRange: number;
@@ -22,7 +20,6 @@ interface GameDashboardProps {
 }
 
 export function GameDashboard({
-  user,
   onLogout,
   minRange,
   maxRange,
@@ -33,8 +30,16 @@ export function GameDashboard({
   onStartGame,
   onStopGame,
 }: GameDashboardProps) {
+  const [user, setUser] = useState<any>(null);
   const { socket } = useSocket();
   const { messages } = useTwitchChat(socket);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   if (!socket) {
     return <div>Connecting to server...</div>;
@@ -47,12 +52,12 @@ export function GameDashboard({
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <img
-                src={user.profile_image_url}
-                alt={user.display_name}
+                src={user?.profile_image_url}
+                alt={user?.display_name}
                 className="w-10 h-10 rounded-full"
               />
               <div>
-                <h2 className="font-semibold">{user.display_name}</h2>
+                <h2 className="font-semibold">{user?.display_name}</h2>
                 <p className="text-sm text-twitch-lightGray">Streamer</p>
               </div>
             </div>

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-
-const CLIENT_ID = 'cismqyqs02m9qugbgr591h0wuqhi2l';
+const CLIENT_ID = import.meta.env.VITE_TWITCH_CLIENT_ID;
 const AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:5173&response_type=code&scope=user:read:email`;
 
 interface User {
@@ -32,7 +31,6 @@ export function useTwitchAuth() {
     try {
       const response = await axios.post('http://localhost:3000/auth/token', { code });
       const { access_token } = response.data;
-      console.log('Access token:', access_token);
       localStorage.setItem('twitch_token', access_token);
       fetchUserInfo(access_token);
     } catch (error) {
@@ -45,8 +43,9 @@ export function useTwitchAuth() {
       const response = await axios.get('http://localhost:3000/auth/user', {
         headers: { access_token: token },
       });
-      setUser(response.data.data[0]);
-      console.log("user" , user)
+      const userData = response.data.data[0];
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData)); // Store user data in localStorage
     } catch (error) {
       console.error('Error fetching user data:', error);
     } finally {
@@ -61,6 +60,7 @@ export function useTwitchAuth() {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('twitch_token');
+    localStorage.removeItem('user'); // Clear user data on logout
   };
 
   return { user, loading, login, logout };

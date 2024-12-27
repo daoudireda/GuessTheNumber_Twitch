@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import cors from 'cors';
+import axios from 'axios';
 
 dotenv.config();
 
@@ -15,11 +17,19 @@ const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:5173",
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    allowedHeaders: ['Content-Type', 'Authorization', 'access_token'],
+    credentials: true,
   }
 });
 
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
 
+app.use(express.json());
 
 app.use(express.static(join(__dirname, '../dist')));
 
@@ -35,7 +45,9 @@ const twitchClient = new tmi.Client({
 let gameActive = false;
 let targetNumber = null;
 let numberRange = { min: 1, max: 100 };
-const REDIRECT_URI = 'http://localhost:5173';
+const REDIRECT_URI = 'http://localhost:5173'
+const CLIENT_ID = process.env.VITE_TWITCH_CLIENT_ID;
+const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET
 
 twitchClient.connect().catch(console.error);
 
@@ -90,7 +102,6 @@ io.on('connection', (socket) => {
 // Step 1: Exchange Authorization Code for Access Token
 app.post('/auth/token', async (req, res) => {
   const { code } = req.body;
-  console.log("code" ,code)
 
   try {
     const response = await axios.post('https://id.twitch.tv/oauth2/token', null, {
@@ -104,7 +115,6 @@ app.post('/auth/token', async (req, res) => {
     });
 
     res.json(response.data);
-    console.log('Token exchanged:', response.data);
   } catch (error) {
     console.error('Error exchanging token:', error.response?.data || error.message);
     res.status(500).json({ error: 'Failed to exchange token' });
@@ -124,7 +134,6 @@ app.get('/auth/user', async (req, res) => {
     });
 
     res.json(response.data);
-    console.log('User data:', response.data);
   } catch (error) {
     console.error('Error fetching user data:', error.response?.data || error.message);
     res.status(500).json({ error: 'Failed to fetch user data' });

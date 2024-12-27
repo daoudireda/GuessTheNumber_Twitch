@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { LandingPage } from './components/LandingPage';
 import { GameDashboard } from './components/GameDashboard';
 import { useSocket } from './hooks/useSocket';
@@ -22,23 +23,26 @@ function App() {
     );
   }
 
-  if (!user) {
-    return <LandingPage onLogin={login} />;
-  }
-
   return (
-    <GameDashboard
-      user={user}
-      onLogout={logout}
-      minRange={minRange}
-      maxRange={maxRange}
-      gameState={gameState}
-      winner={winner}
-      onMinChange={setMinRange}
-      onMaxChange={setMaxRange}
-      onStartGame={handleStartGame}
-      onStopGame={stopGame}
-    />
+    <Router>
+      <Routes>
+        <Route 
+          path="/" 
+          element={user ? <GameDashboard
+            onLogout={logout}
+            minRange={minRange}
+            maxRange={maxRange}
+            gameState={gameState}
+            winner={winner}
+            onMinChange={setMinRange}
+            onMaxChange={setMaxRange}
+            onStartGame={handleStartGame}
+            onStopGame={stopGame}
+          /> : <LandingPage onLogin={login} />} 
+        />
+        
+      </Routes>
+    </Router>
   );
 }
 
